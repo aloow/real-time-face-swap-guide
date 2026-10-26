@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'" />
+    <title>Browser capability check · Real-Time Face Swap Guide</title>
+    <style>
+      :root { color-scheme: light dark; font: 16px/1.65 system-ui, sans-serif; --bg: #f5faf8; --card: #fff; --ink: #173d39; --muted: #48645f; --line: #cdded8; --accent: #126858; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #102523; --card: #18322e; --ink: #e4f5ef; --muted: #b5cdc5; --line: #46615a; --accent: #9de7cf; } }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); }
+      main { max-width: 850px; margin: 0 auto; padding: 32px 20px 48px; }
+      header { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+      .eyebrow { font-size: .85rem; font-weight: 700; color: var(--muted); }
+      h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.2; margin: 24px 0 16px; }
+      p { color: var(--muted); }
+      section { border: 1px solid var(--line); border-radius: 18px; background: var(--card); padding: 20px; margin-top: 24px; }
+      label { font-size: .9rem; }
+      button, select { min-height: 44px; border-radius: 10px; border: 1px solid var(--line); padding: 8px 14px; background: var(--card); color: var(--ink); font: inherit; }
+      button { cursor: pointer; font-weight: 650; }
+      button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+      button:disabled { opacity: .5; cursor: default; }
+      :focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+      .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+      table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+      th, td { text-align: left; padding: 12px 6px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; vertical-align: top; }
+      th:first-child { width: 65%; }
+      code { font-size: .85em; }
+      .note { font-size: .9rem; }
+      #status { min-height: 1.7em; }
+      [hidden] { display: none !important; }
+      @media (max-width: 390px) { main { padding: 20px 14px 32px; } section { padding: 14px; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <span class="eyebrow">REAL-TIME FACE SWAP GUIDE</span>
+        <label><span data-i18n="language">Language</span> <select id="language"><option value="en">English</option><option value="zh">简体中文</option></select></label>
+      </header>
+      <h1 data-i18n="title">Check browser prerequisites</h1>
+      <p data-i18n="intro">Check media APIs and common recording formats before troubleshooting a live video tool.</p>
+      <p class="note" data-i18n="privacy">No camera or microphone access. No uploads, analytics, or external requests. This standalone file runs its checks locally.</p>
+      <div class="actions">
+        <button id="run" class="primary" type="button" data-i18n="run">Run checks</button>
+        <button id="save" type="button" disabled data-i18n="save">Save report</button>
+      </div>
+      <p id="status" role="status" aria-live="polite"></p>
+      <section id="results" hidden aria-label="Capability results">
+        <table>
+          <thead><tr><th scope="col" data-i18n="capability">Capability</th><th scope="col" data-i18n="result">Result</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </section>
+      <section>
+        <strong data-i18n="limitTitle">What this check can tell you</strong>
+        <p class="note" data-i18n="limits">API or MIME support is a prerequisite only. It does not verify camera permission, a connected device, successful recording, AI performance, local processing, OBS output, or video-call compatibility.</p>
+        <p class="note" data-i18n="next">Next: test a short processed recording, save it, and replay the saved file. Verify any external output in the actual receiving app.</p>
+      </section>
+      <noscript><p>Enable JavaScript to run the local capability checks. / 需要启用 JavaScript 才能运行本地能力检查。</p></noscript>
+    </main>
+    <script>
+      'use strict';
+      const text = {
+        en: { language: 'Language', title: 'Check browser prerequisites', intro: 'Check media APIs and common recording formats before troubleshooting a live video tool.', privacy: 'No camera or microphone access. No uploads, analytics, or external requests. This standalone file runs its checks locally.', run: 'Run checks', save: 'Save report', capability: 'Capability', result: 'Result', limitTitle: 'What this check can tell you', limits: 'API or MIME support is a prerequisite only. It does not verify camera permission, a connected device, successful recording, AI performance, local processing, OBS output, or video-call compatibility.', next: 'Next: test a short processed recording, save it, and replay the saved file. Verify any external output in the actual receiving app.', supported: 'Available', unsupported: 'Unavailable', complete: 'Checks complete. No media devices were opened.', secure: 'Secure context', camera: 'Camera access API (not opened)', recorder: 'MediaRecorder API', exception: 'Query failed', results: 'Capability results' },
+        zh: { language: '语言', title: '检查浏览器前置能力', intro: '检查媒体 API 和常见录制格式，帮助定位实时视频工具的问题。', privacy: '不调用摄像头或麦克风，不上传数据，不接入统计，不发起外部请求。这个独立文件只在本地检查能力。', run: '开始检查', save: '保存报告', capability: '检查项目', result: '结果', limitTitle: '这些结果能说明什么', limits: 'API 或格式支持只代表前置能力，不代表摄像头权限、设备连接、录制成功、AI 性能、本地处理、OBS 输出或视频通话已经验证。', next: '下一步：录制一小段处理后的结果，保存后重新播放。对外输出需要在实际接收软件里单独验证。', supported: '可用', unsupported: '不可用', complete: '检查完成，没有开启任何媒体设备。', secure: '安全上下文', camera: '摄像头访问 API（未开启）', recorder: 'MediaRecorder API', exception: '查询失败', results: '能力检查结果' }
+      };
+      const language = document.getElementById('language');
+      const rows = document.getElementById('rows');
+      let report = null;
+      language.value = navigator.language?.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+      function render() {
+        const words = text[language.value] || text.en;
+        document.documentElement.lang = language.value === 'zh' ? 'zh-CN' : 'en';
+        document.querySelectorAll('[data-i18n]').forEach((element) => { element.textContent = words[element.dataset.i18n]; });
+        document.getElementById('results').setAttribute('aria-label', words.results);
+        rows.replaceChildren();
+        if (!report) return;
+        for (const item of report.checks) {
+          const row = document.createElement('tr');
+          const label = document.createElement('th');
+          label.scope = 'row';
+          label.textContent = item.labelKey ? words[item.labelKey] : item.mime;
+          const value = document.createElement('td');
+          value.textContent = item.available === null ? words.exception : item.available ? words.supported : words.unsupported;
+          row.append(label, value);
+          rows.append(row);
+        }
+        document.getElementById('status').textContent = words.complete;
+      }
+      document.getElementById('run').addEventListener('click', () => {
+        const checks = [
+          { labelKey: 'secure', available: window.isSecureContext === true },
+          { labelKey: 'camera', available: typeof navigator.mediaDevices?.getUserMedia === 'function' },
+          { labelKey: 'recorder', available: typeof window.MediaRecorder === 'function' }
+        ];
+        for (const mime of ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']) {
+          let available = false;
+          try { available = typeof window.MediaRecorder?.isTypeSupported === 'function' && window.MediaRecorder.isTypeSupported(mime); }
+          catch { available = null; }
+          checks.push({ mime, available });
+        }
+        report = { schema_version: 1, checked_at: new Date().toISOString(), kind: 'browser-api-capability-only', camera_opened: false, microphone_opened: false, checks };
+        document.getElementById('results').hidden = false;
+        document.getElementById('save').disabled = false;
+        render();
+      });
+      document.getElementById('save').addEventListener('click', () => {
+        if (!report) return;
+        const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2) + '\n'], { type: 'application/json' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'browser-capability-report.json';
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      });
+      language.addEventListener('change', render);
+      render();
+    </script>
+  </body>
+</html>
